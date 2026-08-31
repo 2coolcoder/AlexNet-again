@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# training artifacts
+runs/
+*.pth
+*.pt
+wandb/
+events.out.tfevents.*
+
+# generated split index files (regenerate with scripts/make_splits.py)
+splits/*.txt

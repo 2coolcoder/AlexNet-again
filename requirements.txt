@@ -1,0 +1,12 @@
+# Pinned to the versions verified on this machine (CUDA 12.8, 2x RTX 6000 Ada).
+torch==2.9.0
+torchvision==0.24.0
+numpy==1.26.4
+pillow==10.4.0
+PyYAML>=6.0
+tensorboard==2.19.0
+tqdm>=4.66
+pytest>=8.0
+
+# optional experiment tracking, enabled with `logging.wandb: true`
+# wandb==0.19.11

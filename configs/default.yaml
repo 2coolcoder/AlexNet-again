@@ -1,0 +1,42 @@
+# 90-epoch headline recipe. batch_size is PER GPU: a 2-GPU run has a global
+# batch of 512 and the learning rate scales with it automatically.
+data:
+  root: /data/users/cs24s008/Datasets/ilsvrc2012_256
+  splits_dir: splits
+  batch_size: 256
+  workers: 16
+  image_size: 224
+  resize_size: 256
+  pca_lighting: 0.0
+
+model:
+  variant: bn          # BatchNorm in place of the paper's LRN
+  num_classes: 1000
+  dropout: 0.5
+
+optim:
+  lr: null             # null => base_lr * global_batch / base_batch
+  base_lr: 0.01
+  base_batch: 256
+  momentum: 0.9
+  nesterov: true
+  weight_decay: 5.0e-4
+  label_smoothing: 0.1
+  warmup_epochs: 5
+  min_lr: 0.0
+
+train:
+  epochs: 90
+  parallel_mode: ddp
+  amp_dtype: bfloat16
+  channels_last: true
+  compile: false
+  sync_bn: false
+  bf16_grad_compress: true
+  seed: 42
+  print_freq: 100
+
+logging:
+  out_dir: runs/default
+  tensorboard: true
+  wandb: false
