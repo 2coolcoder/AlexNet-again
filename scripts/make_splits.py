@@ -17,9 +17,15 @@ from __future__ import annotations
 
 import argparse
 import random
+import re
 from pathlib import Path
 
 SEED = 1234
+
+# ImageNet class directories are WordNet ids: 'n' followed by 8 digits. Matching
+# on that rather than "any subdirectory" means a stray directory in the dataset
+# root is never mistaken for a 1001st class, which would shift every label.
+WNID = re.compile(r"^n\d{8}$")
 
 
 def main() -> int:
@@ -31,9 +37,11 @@ def main() -> int:
 
     root, out = Path(args.root), Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
-    classes = sorted(p.name for p in root.iterdir() if p.is_dir())
+    classes = sorted(
+        p.name for p in root.iterdir() if p.is_dir() and WNID.match(p.name)
+    )
     if not classes:
-        raise SystemExit(f"no class directories under {root}")
+        raise SystemExit(f"no wnid class directories (nXXXXXXXX) under {root}")
 
     (out / "classes.txt").write_text("\n".join(classes) + "\n")
 

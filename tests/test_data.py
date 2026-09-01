@@ -137,3 +137,36 @@ def test_unpadded_eval_sampler_covers_every_sample_once():
         flat = [i for s in shards for i in s]
         assert sorted(flat) == list(range(total))       # every index exactly once
         assert max(map(len, shards)) - min(map(len, shards)) <= 1  # balanced
+
+
+def test_non_wnid_directories_are_not_treated_as_classes(tiny_dataset, tmp_path):
+    """Only wnid directories count as classes.
+
+    Without this filter, any stray directory in the dataset root becomes a
+    1001st class and every label after it shifts.
+    """
+    (tiny_dataset / "256px").mkdir()
+    (tiny_dataset / "256px" / "n00000001").mkdir()
+    Image.new("RGB", (40, 32)).save(tiny_dataset / "256px" / "n00000001" / "x.JPEG")
+    out = tmp_path / "splits"
+    _make_splits(tiny_dataset, out)
+    classes = (out / "classes.txt").read_text().split()
+    assert classes == ["n00000001", "n00000002", "n00000003"]
+    assert "256px" not in classes
+    assert not any(line.startswith("256px/") for line in
+                   (out / "train.txt").read_text().splitlines())
+
+
+def test_preprocess_skips_non_wnid_directories(tmp_path):
+    """A destination nested in the source must not be re-processed on a re-run."""
+    src, dst = tmp_path / "src", tmp_path / "src" / "256px"
+    (src / "n00000001").mkdir(parents=True)
+    Image.new("RGB", (800, 400)).save(src / "n00000001" / "a.JPEG")
+    for _ in range(2):  # second run must be a no-op, not a recursive re-process
+        subprocess.run(
+            [sys.executable, str(REPO / "scripts" / "preprocess_imagenet.py"),
+             "--src", str(src), "--dst", str(dst), "--workers", "2"],
+            capture_output=True, text=True, check=True,
+        )
+    assert sorted(p.name for p in dst.iterdir()) == ["n00000001"]
+    assert not (dst / "256px").exists()

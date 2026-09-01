@@ -13,3 +13,5 @@ events.out.tfevents.*
 
 # generated split index files (regenerate with scripts/make_splits.py)
 splits/*.txt
+
+myREADME.md

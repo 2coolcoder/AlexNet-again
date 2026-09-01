@@ -3,8 +3,9 @@
 
 AlexNet is ~0.7 GFLOPs, so training on these GPUs is bound by JPEG decode
 rather than compute. Decoding full-resolution images every epoch wastes most of
-the CPU budget; a one-off resize shrinks the set to roughly 20 GB and cuts
-per-epoch decode cost several-fold. The source directory is never modified.
+the CPU budget; a one-off resize shrinks the set to roughly 38 GB and cuts
+per-epoch decode cost several-fold. The source directory is never modified --
+the resized copy goes to its own directory.
 
 Idempotent: files already present at the destination are skipped, so an
 interrupted run can simply be restarted.
@@ -18,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 from multiprocessing import Pool
 from pathlib import Path
@@ -27,6 +29,11 @@ from PIL import Image
 # ImageNet contains a handful of very large images; Pillow's decompression-bomb
 # guard would otherwise refuse them.
 Image.MAX_IMAGE_PIXELS = None
+
+# Only WordNet-id directories are treated as classes, so a stray non-class
+# directory in the dataset root is ignored rather than silently becoming a
+# 1001st class (and a destination nested in the source is never re-processed).
+WNID = re.compile(r"^n\d{8}$")
 
 
 def resize_one(job: tuple[str, str, int, int]) -> tuple[str, str]:
@@ -68,7 +75,9 @@ def main() -> int:
         print(f"source not found: {src_root}", file=sys.stderr)
         return 1
 
-    classes = sorted(p.name for p in src_root.iterdir() if p.is_dir())
+    classes = sorted(
+        p.name for p in src_root.iterdir() if p.is_dir() and WNID.match(p.name)
+    )
     print(f"found {len(classes)} class directories under {src_root}")
 
     jobs = []

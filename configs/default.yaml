@@ -4,7 +4,7 @@ data:
   root: /data/users/cs24s008/Datasets/ilsvrc2012_256
   splits_dir: splits
   batch_size: 256
-  workers: 16
+  workers: 32
   image_size: 224
   resize_size: 256
   pca_lighting: 0.0
